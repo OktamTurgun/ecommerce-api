@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ecommerce__api.wsgi.application'
+WSGI_APPLICATION = 'ecommerce_api.wsgi.application'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

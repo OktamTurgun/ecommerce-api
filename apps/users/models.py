@@ -47,7 +47,7 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_suoeruser(self, email, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         """
         Admin/Superuser yaratish
 
@@ -152,7 +152,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     # ==================== SETTINGS ====================
-    objects = UserManager  # Custom manager'ni ulash
+    objects = UserManager()  # Custom manager'ni ulash
 
     USERNAME_FIELD = "email"  # Login uchun email. Login qilishda email so'raladi, username emas
     REQUIRED_FIELDS = []  # createsuperuser'da so'ralmaydigan fieldlar, 
