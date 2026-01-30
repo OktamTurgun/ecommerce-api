@@ -93,7 +93,7 @@ class UserAdmin(BaseUserAdmin):
   readonly_fields = ['date_joined', 'last_login']
 
   # ==================== CUSTOM METODLAR ====================
-  @admin.display(description="To'liq ism", ordering='firs_name')
+  @admin.display(description="To'liq ism", ordering='first_name')
   def get_full_name_display(self, obj):
     """
       Jadvalda to'liq ismni ko'rsatish
@@ -108,7 +108,8 @@ class UserAdmin(BaseUserAdmin):
 
     if full_name == obj.email:
       return format_html(
-        '<span style="color: gray; font-style: italic;">Ism kiritilmagan</span>'
+          '<span style="color: gray; font-style: italic;">{}</span>',
+          "Ism kiritilmagan"
       )
     return full_name
 
