@@ -284,3 +284,25 @@ class UserTokenSerializer(serializers.Serializer):
     user = UserSerializer()
     tokens = serializers.DictField()
     message = serializers.CharField()
+
+# ============ PASSWORD RESET ============
+class ForgotPasswordSerializer(serializers.Serializer):
+    """
+    Forgot password - email yuborish uchun
+    
+    Request:
+    {
+        "email": "user@example.com"
+    }
+    """
+    email = serializers.EmailField(rquired=True)
+
+    def validate_email(self, value):
+        """
+        Email borligini tekshirish
+        
+        Note: Security - email mavjud emasligini bildirmaymiz
+        """
+        return value.lower()
+    
+    
