@@ -137,7 +137,7 @@ class UserLoginView(APIView):
                 'access': str(refresh.access_token),
             },
             'message': "Login muvaffaqiyatli!"
-        }, status=status.HTTP_201_OK)
+        }, status=status.HTTP_200_OK)
     
 class UserLogoutView(APIView):
     """

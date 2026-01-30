@@ -165,7 +165,7 @@ class UserLoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
-class UserSerializer(serializers.Serializer):
+class UserSerializer(serializers.ModelSerializer):
     """
       User profil ma'lumotlari uchun
       
@@ -211,7 +211,7 @@ class UserSerializer(serializers.Serializer):
         """
         return obj.get_full_name()
     
-class ChangePasswordSerializer(serializers.ModelSerializer):
+class ChangePasswordSerializer(serializers.Serializer):
     """
       Parolni o'zgartirish uchun
       
