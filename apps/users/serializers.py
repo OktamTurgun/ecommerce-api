@@ -295,7 +295,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
         "email": "user@example.com"
     }
     """
-    email = serializers.EmailField(rquired=True)
+    email = serializers.EmailField(required=True)
 
     def validate_email(self, value):
         """
@@ -305,4 +305,55 @@ class ForgotPasswordSerializer(serializers.Serializer):
         """
         return value.lower()
     
+class ResetPasswordSeriliser(serializers.Serializer):
+    """
+    Password reset - yangi parol o'rnatish
     
+    Request:
+    {
+        "uidb64": "MQ",
+        "token": "abc123...",
+        "new_password": "NewPass123!",
+        "new_password2": "NewPass123!"
+    }
+    """
+    uidb64 = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(
+        required=True,
+        write_only=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    new_password2 = serializers.CharField(
+        required=True,
+        write_only=True,
+        style={'input_type': 'password'}
+    ) 
+    def validate(self, attrs):
+        """
+        Parollar bir xilligini tekshirish
+        """
+        if attrs['new_password'] != attrs['New_password2']:
+            raise serializers.ValidationError({
+                'new_password': "Parollar bir xil emas!"
+            })   
+        return attrs
+
+# ============ EMAIL VERIFICATION ============
+class ResendVerificationSerializer(serializers.Serializer):
+    """
+    Verification email'ni qayta yuborish
+    
+    Request:
+    {
+        "email": "user@example.com"
+    }
+    """
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        return value.lower()
+    
+    
+
