@@ -326,12 +326,6 @@ class UserListView(generics.ListAPIView):
     permisson_classes = [permissions.IsAuthenticated]
 
 # ============ PASSWORD RESET VIEWS ============
-
-from django.conf import settings
-from core.utils import account_activation_token, encode_uid, get_user_from_uid
-from core.emails import send_password_reset_email, send_verification_email
-
-
 class ForgotPasswordView(APIView):
     """
     POST /api/users/forgot-password/
