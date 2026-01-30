@@ -153,3 +153,87 @@ def send_verification_email(user, verification_url):
         html_message=html_message,
         fail_silently=False,
     )
+
+def send_email_change_verification(user, new_email, verification_url):
+    """
+    Email o'zgartirish uchun tasdiqlash linki yuborish
+    
+    Args:
+        user: User instance
+        new_email: Yangi email manzil
+        verification_url: Verification URL with token
+    """
+    subject = "Email manzilni o'zgartirish - E-commerce"
+
+    html_message = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>Salom, {user.get_full_name() or user.email}!</h2>
+            
+            <p>Siz email manzilingizni o'zgartirish so'rovini yubordingiz.</p>
+            
+            <p><strong>Hozirgi email:</strong> {user.email}</p>
+            <p><strong>Yangi email:</strong> {new_email}</p>
+            
+            <p>O'zgarishni tasdiqlash uchun quyidagi tugmani bosing:</p>
+            
+            <p style="margin: 30px 0;">
+                <a href="{verification_url}" 
+                   style="background-color: #ffc107; 
+                          color: #000; 
+                          padding: 12px 24px; 
+                          text-decoration: none; 
+                          border-radius: 4px;
+                          display: inline-block;">
+                    Email o'zgarishini tasdiqlash
+                </a>
+            </p>
+            
+            <p>Yoki quyidagi linkni nusxalang:</p>
+            <p style="color: #666; word-break: break-all;">{verification_url}</p>
+            
+            <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                <strong>Muhim:</strong> Bu link 1 soat amal qiladi.
+            </p>
+            
+            <p style="color: #666; font-size: 14px;">
+                Agar siz bu so'rovni yubormagan bo'lsangiz, 
+                bu emailni e'tiborsiz qoldiring va parolingizni o'zgartiring.
+            </p>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+            
+            <p style="color: #999; font-size: 12px;">
+                E-commerce Team<br>
+                Bu avtomatik email, javob bermang.
+            </p>
+        </body>
+    </html>
+    """
+    plain_message = f"""
+    Salom, {user.get_full_name() or user.email}!
+    
+    Siz email manzilingizni o'zgartirish so'rovini yubordingiz.
+    
+    Hozirgi email: {user.email}
+    Yangi email: {new_email}
+    
+    O'zgarishni tasdiqlash uchun quyidagi linkni oching:
+    {verification_url}
+    
+    Bu link 1 soat amal qiladi.
+    
+    Agar siz bu so'rovni yubormaganingizda bo'lsa, 
+    bu emailni e'tiborsiz qoldiring va parolingizni o'zgartiring.
+    
+    E-commerce Team
+    """
+    # Yangi email'ga yuborish (eski email emas!)
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[new_email],  # ← Yangi email!
+        html_message=html_message,
+        fail_silently=False,
+    )

@@ -34,6 +34,7 @@ FRONTEND_URL = 'http://localhost:3000'
 # Token expiry (minutes)
 PASSWORD_RESET_TIMEOUT = 60 * 24  # 24 soat
 EMAIL_VERIFICATION_TIMEOUT = 60 * 24 * 7  # 7 kun
+EMAIL_CHANGE_TIMEOUT = 60 
 
 # Logging
 LOGGING = {
