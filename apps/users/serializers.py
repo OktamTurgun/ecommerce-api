@@ -284,3 +284,133 @@ class UserTokenSerializer(serializers.Serializer):
     user = UserSerializer()
     tokens = serializers.DictField()
     message = serializers.CharField()
+
+# ============ PASSWORD RESET ============
+class ForgotPasswordSerializer(serializers.Serializer):
+    """
+    Forgot password - email yuborish uchun
+    
+    Request:
+    {
+        "email": "user@example.com"
+    }
+    """
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        """
+        Email borligini tekshirish
+        
+        Note: Security - email mavjud emasligini bildirmaymiz
+        """
+        return value.lower()
+    
+class ResetPasswordSerializer(serializers.Serializer):
+    """
+    Password reset - yangi parol o'rnatish
+    
+    Request:
+    {
+        "uidb64": "MQ",
+        "token": "abc123...",
+        "new_password": "NewPass123!",
+        "new_password2": "NewPass123!"
+    }
+    """
+    uidb64 = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(
+        required=True,
+        write_only=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    new_password2 = serializers.CharField(
+        required=True,
+        write_only=True,
+        style={'input_type': 'password'}
+    ) 
+    def validate(self, attrs):
+        """
+        Parollar bir xilligini tekshirish
+        """
+        if attrs['new_password'] != attrs['New_password2']:
+            raise serializers.ValidationError({
+                'new_password': "Parollar bir xil emas!"
+            })   
+        return attrs
+
+# ============ EMAIL VERIFICATION ============
+class ResendVerificationSerializer(serializers.Serializer):
+    """
+    Verification email'ni qayta yuborish
+    
+    Request:
+    {
+        "email": "user@example.com"
+    }
+    """
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        return value.lower()
+    
+# ============ EMAIL CHANGE ============
+class ChangeEmailSerializer(serializers.Serializer):
+    """
+    Email o'zgartirish so'rovi
+    
+    Request:
+    {
+        "new_email": "newemail@example.com",
+        "password": "CurrentPass123!"
+    }
+    """
+    new_email = serializers.EmailField(required=True)
+    password = serializers.CharField(
+        required=True,
+        write_only=True,
+        style={'input_type': 'password'}
+    )   
+    def validate_new_email(self, value):
+        """
+        Yangi email tekshirish
+        """
+        value=value.lower()
+
+        # Email allaqqachon ishlatilganmi?
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'Bu email allaqochon ishlatilmoqda!'
+            )
+        return value
+    
+    def validate_password(self, value):
+        """
+        Hozirgi parolni tekshirish
+        """
+        user = self.context['request'].user
+
+        if not user.check_password(value):
+            raise serializers.ValidationError(
+                'Parol noto\'g\'ri!'
+            )
+        return value
+
+class VerifyEmailChangeSerializer(serializers.Serializer):
+    """
+    Email o'zgarishini tasdiqlash
+    
+    Request:
+    {
+        "uidb64": "MQ",
+        "token": "abc123...",
+        "new_email": "newemail@example.com"
+    }
+    """
+    uidb64 = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_email = serializers.EmailField(required=True)
+
+    def validate_new_email(self, value):
+        return value.lower()

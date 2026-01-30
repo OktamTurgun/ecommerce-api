@@ -22,8 +22,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-# Email - Console backend
+# ============ EMAIL SETTINGS ============
+# Console backend - Development uchun
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST_USER = 'noreply@ecommerce.local'
+DEFAULT_FROM_EMAIL = 'E-commerce <noreply@ecommerce.local>'
+
+# Frontend URL (email link'lar uchun)
+FRONTEND_URL = 'http://localhost:3000'
+
+# Token expiry (minutes)
+PASSWORD_RESET_TIMEOUT = 60 * 24  # 24 soat
+EMAIL_VERIFICATION_TIMEOUT = 60 * 24 * 7  # 7 kun
+EMAIL_CHANGE_TIMEOUT = 60 
 
 # Logging
 LOGGING = {
