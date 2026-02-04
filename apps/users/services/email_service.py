@@ -36,3 +36,10 @@ class EmailService:
     def send_email_change(user, new_email, code):
         """Email change verification code yuborish"""
         return send_email_change_code(user, new_email, code)
+    
+    @staticmethod
+    def send_password_reset(user, reset_url):
+        """Password reset link yuborish"""
+        from core.emails import send_password_reset_link_email
+        return send_password_reset_link_email(user, reset_url)
+

@@ -205,3 +205,59 @@ E-commerce Jamoasi
     except Exception as e:
         print(f"❌ Email yuborishda xatolik: {e}")
         return False
+    
+def send_password_reset_link_email(user, reset_url):
+    """
+    Parolni tiklash linkini yuborish
+    Args:
+        user: User instance
+        reset_url: Frontend URL + uidb64 + token
+    Returns:
+        bool: success
+    """
+    subject = "🔑 Parolni Tiklash - E-commerce"
+
+    plain_message = f"""
+Assalomu alaykum {user.get_full_name()}!
+
+Parolingizni tiklash so'rovi qabul qilindi.
+Quyidagi link orqali yangi parol o'rnating:
+
+{reset_url}
+
+⏰ Link 30 daqiqa davomida amal qiladi.
+
+Agar bu so'rovni siz yubormagan bo'lsangiz, uni e'tiborsiz qoldiring.
+
+Hurmat bilan,
+E-commerce Jamoasi
+    """.strip()
+
+    html_message = f"""
+<html>
+<body>
+<h2>Assalomu alaykum, {user.get_full_name()}!</h2>
+<p>Parolingizni tiklash so'rovi qabul qilindi.</p>
+<p><a href="{reset_url}">Parolni tiklash uchun shu yerni bosing</a></p>
+<p>⏰ Link 30 daqiqa davomida amal qiladi.</p>
+<p>Agar siz bu so'rovni yubormagan bo'lsangiz, e'tiborsiz qoldiring.</p>
+</body>
+</html>
+    """.strip()
+
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings
+
+    try:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email]
+        )
+        email.attach_alternative(html_message, "text/html")
+        email.send(fail_silently=False)
+        return True
+    except Exception as e:
+        print(f"❌ Email yuborishda xatolik: {e}")
+        return False
