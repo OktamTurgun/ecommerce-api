@@ -108,6 +108,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+
+    # ============ SWAGGER SETTINGS ============
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
@@ -125,9 +127,79 @@ SIMPLE_JWT = {
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
 }
 
-# API Documentation
+# ============ API DOCUMENTATION SETTINGS ============
 SPECTACULAR_SETTINGS = {
     'TITLE': 'E-commerce API',
-    'DESCRIPTION': 'Professional E-commerce REST API',
+    'DESCRIPTION': '''
+    Professional E-commerce REST API built with Django REST Framework.
+    
+    ## Features
+    - User authentication with JWT tokens
+    - Email verification system
+    - Password reset functionality
+    - Profile management
+    - Complete user management
+    
+    ## Authentication
+    Use JWT Bearer token authentication:
+    1. Register or login to get tokens
+    2. Click "Authorize" button above
+    3. Enter: Bearer YOUR_ACCESS_TOKEN
+    4. Try protected endpoints
+    
+    ## Getting Started
+    1. Register: POST /api/users/register/
+    2. Verify email: GET /api/users/verify-email/
+    3. Login: POST /api/users/login/
+    4. Use access token for authenticated requests
+    ''',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    
+    # Sidebar settings
+    'COMPONENT_SPLIT_REQUEST': True,
+    
+    # Authentication
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Enter: Bearer YOUR_ACCESS_TOKEN'
+        }
+    },
+    
+    # Tags (grouping)
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User registration, login, logout'},
+        {'name': 'Email Verification', 'description': 'Email verification and resend'},
+        {'name': 'Profile', 'description': 'User profile management'},
+        {'name': 'Password Management', 'description': 'Change, forgot, reset password'},
+        {'name': 'Email Management', 'description': 'Change and verify email'},
+        {'name': 'Token Management', 'description': 'JWT token refresh'},
+        {'name': 'Admin', 'description': 'Admin-only endpoints'},
+    ],
+    
+    # Schema customization
+    'SCHEMA_PATH_PREFIX': r'/api',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    
+    # UI settings
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'filter': True,
+    },
+    
+    # Additional settings
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'Bearer': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
 }

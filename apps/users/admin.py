@@ -19,7 +19,7 @@ class UserAdmin(BaseUserAdmin):
   list_display = [
     'email',
     'get_full_name_display',
-    'phone',
+    'phone_number',
     'is_active_display',
     'is_staff',
     'date_joined_display',
@@ -34,9 +34,9 @@ class UserAdmin(BaseUserAdmin):
 
   search_fields = [
     'email',
-    'firs_name',
+    'first_name',
     'last_name',
-    'phone',
+    'phone_number',
   ]
 
   ordering = ['-date_joined']
@@ -48,7 +48,7 @@ class UserAdmin(BaseUserAdmin):
     }),
     # Bo'lim 2: Shaxsiy
     ('Shahsiy ma\'lumotlar', {
-      'fields': ('first_name', 'last_name', 'phone'),
+      'fields': ('first_name', 'last_name', 'phone_number'),
       'description': 'Foydalanuvchi shaxsiy ma\'lumotlari' 
     }),
     # Bo'lim 3: Manzil (Yopiq boshlanadi)
@@ -83,7 +83,7 @@ class UserAdmin(BaseUserAdmin):
         'password2',
         'first_name',
         'last_name',
-        'phone',
+        'phone_number',
         'is_active',
         'is_staff',
       ),
