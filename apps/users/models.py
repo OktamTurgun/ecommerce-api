@@ -5,193 +5,130 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.utils import timezone
-
+import uuid
 
 class UserManager(BaseUserManager):
-    """
-    Custom User Manager
-
-    Vazifa:
-    - create_user() - oddiy user yaratish
-    - create_superuser() - admin yaratish
-    """
-
     def create_user(self, email, password=None, **extra_fields):
-        """
-        Oddiy user yaratish
-
-        Args:
-            email: user email
-            password: user password
-            **extra_fields: qo'shimcha fieldlar (first_name, phone, etc)
-
-        Returns:
-            User obyekti
-        """
-
-        # 1. Email tekshirish
         if not email:
-            raise ValueError("Email majburiy!")
+            raise ValueError("Email majburiy")
 
-        # 2. Email normalizatsiya (lowercase, trim)
         email = self.normalize_email(email)
-
-        # 3. User obyekti yaratish
         user = self.model(email=email, **extra_fields)
-
-        # 4. Password hash qilish (plain text emas!)
         user.set_password(password)
-
-        # 5. Datebase'ga saqlash
         user.save(using=self._db)
-
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """
-        Admin/Superuser yaratish
-
-        Farqi:
-        - is_staff = True
-        - is_superuser = True
-        - is_active = True
-        """
-
-        # 1. Default qiymatlar
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
 
-        # 2. Tekshirish
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser is_staff=True bo'lishi kerak.")
-
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser is_superuser=True bo'lishi kerak.")
-
-        # 3. Oddiy user yaratish method'ini chaqirish
         return self.create_user(email, password, **extra_fields)
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Custom User Model
-    
-    Asosiy o'zgarishlar:
-    - Username o'rniga Email ishlatiladi
-    - Qo'shimcha fieldlar: phone, address, etc
+    Custom User model
+    Faqat foydalanuvchiga tegishli data
     """
-    
-    # ==================== ASOSIY FIELDLAR ====================
-    email = models.EmailField(          # Takrorlanmasligi kerak
-        unique=True,                    # Admin panelda ko'rinishi
-        verbose_name="Email manzil",    # Qo'shimcha ma'lumot
-        help_text="User email manzili"
-    )
 
-    first_name = models.CharField(
-        max_length=50, 
-        blank=True,                     # Bo'sh bo'lishi mumkin (form'da)
-        verbose_name="Ism"
-    )
-    last_name = models.CharField(
-        max_length=50, 
-        null=True,                      # Database'da NULL bo'lishi mumkin
-        verbose_name="Familiya"
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # ==================== CONTACT INFO ====================
-    phone = models.CharField(
-        max_length=20,
-        blank=True,
-        null=True,
-        verbose_name="Telefon raqam",
-        help_text="+998901234567 formatda",
-    )
+    # ===== AUTH =====
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
 
-    # ==================== ADDRESS FIELDLARI ====================
-    address = models.TextField(
-        max_length=100, blank=True, null=True, verbose_name="To'liq manzil"
-    )
-    city = models.CharField(
-        max_length=100, blank=True, null=True, verbose_name="Shahar"
-    )
-    country = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        default="Uzbekistan",
-        verbose_name="Mamlakat",
-    )
-    postal_code = models.CharField(
-        max_length=20, blank=True, null=True, verbose_name="Pochta indeksi"
-    )
+    # ===== PROFILE =====
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name = models.CharField(max_length=50, blank=True, default="")
 
-    # ==================== PERMISSIONS ====================
-    is_active = models.BooleanField(
-        default=True, verbose_name="Active", help_text="User login qila oladimi?"
-    )
+    # ===== ADDRESS (E-COMMERCE UCHUN MUHIM) =====
+    address = models.TextField(blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True, default="Uzbekistan")
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
 
-    is_staff = models.BooleanField(
-        default=False,
-        verbose_name="Staff status",
-        help_text="Admin panelga kirish xuquqi",
-    )
+    # ===== STATUS =====
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
 
-    is_superuser = models.BooleanField(
-        default=False, verbose_name="Superuser status", help_text="Barcha ruxsatlar"
-    )
+    # ===== TIMESTAMPS =====
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_login = models.DateTimeField(blank=True, null=True)
 
-    # ==================== TIMESTAMPS ====================
-    date_joined = models.DateTimeField(
-        default=timezone.now, verbose_name="Ro'yxatdan o'tgan sana"
-    )
+    objects = UserManager()
 
-    last_login = models.DateTimeField(
-        blank=True, null=True, verbose_name="Oxirgi kirish"
-    )
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
 
-    # ==================== SETTINGS ====================
-    objects = UserManager()  # Custom manager'ni ulash
-
-    USERNAME_FIELD = "email"  # Login uchun email. Login qilishda email so'raladi, username emas
-    REQUIRED_FIELDS = []  # createsuperuser'da so'ralmaydigan fieldlar, 
-
-    # ==================== META ====================
     class Meta:
-        verbose_name = "Foydalanuvchi"
-        verbose_name_plural = "Foydalanuvchilar"
-        ordering = ["-date_joined"]
         db_table = "users"
-
+        ordering = ["-date_joined"]
         indexes = [
             models.Index(fields=["email"]),
-            models.Index(fields=["date_joined"]),
+            models.Index(fields=["phone_number"]),
         ]
 
-    # ==================== METODLAR ====================
     def __str__(self):
-        """
-        User'ni string sifatida ko'rsatish
-        Admin panelda va shellda
-        """
         return self.email
 
-    def get_full_name(self):
-        """
-        To'liq ismni qaytarish
-
-        Returns:
-            str: "John Doe" yoki email
-        """
-        full_name = f"{self.first_name} {self.last_name}".strip()
-        return full_name if full_name else self.email
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.email
 
     def get_short_name(self):
-        """
-        Qisqa ism
+        return self.first_name or self.email
+    
+    def get_full_name(self):
+        return self.full_name
+    
+class UserConfirmation(models.Model):
+    """
+    Universal confirmation model:
+    - Email verification
+    - Phone verification
+    - Password reset
+    """
 
-        Returns:
-            str: Faqat first_name yoki email
-        """
-        return self.first_name if self.first_name else self.email
+    CONFIRMATION_TYPES = (
+        ("email_verification", "Email verification"),
+        ("phone_verification", "Phone verification"),
+        ("password_reset", "Password reset"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="confirmations"
+    )
+
+    confirmation_type = models.CharField(
+        max_length=30,
+        choices=CONFIRMATION_TYPES
+    )
+
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
+
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_confirmations"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "confirmation_type"]),
+            models.Index(fields=["expires_at"]),
+            models.Index(fields=["is_used"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.confirmation_type}"
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def mark_as_used(self):
+        self.is_used = True
+        self.save(update_fields=['is_used'])
