@@ -1,239 +1,207 @@
-from django.core.mail import send_mail
+# core/emails.py
+"""
+Email Service
+-------------
+Email yuborish uchun helper functions
+"""
+
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 
 
-def send_password_reset_email(user, reset_url):
+def send_verification_code_email(user, code):
     """
-    Password reset email yuborish
-
-    Args:
-        user: User instance
-        reset_url: Full reset URL with token
-
-    Example:
-        reset_url = "http://localhost:3000/reset-password?token=abc&uid=MQ"
-    """
-    subject = 'Parolni tiklash - E-commerce'
-
-    # HTML message
-    html_message = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>Salom, {user.get_full_name() or user.email}!</h2>
-            
-            <p>Siz parolni tiklash so'rovini yubordingiz.</p>
-            
-            <p>Yangi parol o'rnatish uchun quyidagi tugmani bosing:</p>
-            
-            <p style="margin: 30px 0;">
-                <a href="{reset_url}" 
-                   style="background-color: #007bff; 
-                          color: white; 
-                          padding: 12px 24px; 
-                          text-decoration: none; 
-                          border-radius: 4px;
-                          display: inline-block;">
-                    Parolni tiklash
-                </a>
-            </p>
-            
-            <p>Yoki quyidagi linkni nusxalang:</p>
-            <p style="color: #666; word-break: break-all;">{reset_url}</p>
-            
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                <strong>Muhim:</strong> Bu link 24 soat amal qiladi.
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-                Agar siz bu so‘rovni yubormagan bo‘lsangiz, 
-                bu emailni e’tiborsiz qoldiring.
-            </p>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-            
-            <p style="color: #999; font-size: 12px;">
-                E-commerce Team<br>
-                Bu avtomatik email, javob bermang.
-            </p>
-        </body>
-    </html>
-    """
-    # Plain text version
-    plain_message = f"""
-    Salom, {user.get_full_name() or user.email}!
-    
-    Siz parolni tiklash so'rovini yubordingiz.
-    
-    Yangi parol o'rnatish uchun quyidagi linkni oching:
-    {reset_url}
-    
-    Bu link 24 soat amal qiladi.
-    
-    Agar siz bu so'rovni yubormaganingizda bo'lsa, bu emailni e'tiborsiz qoldiring.
-    
-    E-commerce Team
-    """
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html_message,
-        fail_silently=False,
-    )
-
-def send_verification_email(user, verification_url):
-    """
-    Email verification link yuborish
+    Email verification code yuborish
     
     Args:
         user: User instance
-        verification_url: Full verification URL with token
-    """
-    subject = 'Email manzilni tasdiqlang - E-commerce'
+        code: 6 raqamli kod
     
-    html_message = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>Xush kelibsiz, {user.get_full_name() or user.email}!</h2>
-            
-            <p>E-commerce'ga ro'yxatdan o'tganingiz uchun rahmat!</p>
-            
-            <p>Akkauntingizni faollashtirish uchun email manzilingizni tasdiqlang:</p>
-            
-            <p style="margin: 30px 0;">
-                <a href="{verification_url}" 
-                   style="background-color: #28a745; 
-                          color: white; 
-                          padding: 12px 24px; 
-                          text-decoration: none; 
-                          border-radius: 4px;
-                          display: inline-block;">
-                    Email'ni tasdiqlash
-                </a>
-            </p>
-            
-            <p>Yoki quyidagi linkni nusxalang:</p>
-            <p style="color: #666; word-break: break-all;">{verification_url}</p>
-            
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                <strong>Muhim:</strong> Bu link 7 kun amal qiladi.
-            </p>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-            
-            <p style="color: #999; font-size: 12px;">
-                E-commerce Team<br>
-                Bu avtomatik email, javob bermang.
-            </p>
-        </body>
-    </html>
+    Returns:
+        bool: Success
     """
+    subject = '🔐 Email Tasdiqlash Kodi - E-commerce'
     
     plain_message = f"""
-    Xush kelibsiz, {user.get_full_name() or user.email}!
-    
-    E-commerce'ga ro'yxatdan o'tganingiz uchun rahmat!
-    
-    Akkauntingizni faollashtirish uchun quyidagi linkni oching:
-    {verification_url}
-    
-    Bu link 7 kun amal qiladi.
-    
-    E-commerce Team
-    """
-    
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html_message,
-        fail_silently=False,
-    )
+Assalomu alaykum {user.get_full_name()}!
 
-def send_email_change_verification(user, new_email, verification_url):
+E-commerce platformamizga xush kelibsiz! 🎉
+
+Emailingizni tasdiqlash uchun quyidagi kodni kiriting:
+
+┌─────────────────┐
+│  KOD: {code}  │
+└─────────────────┘
+
+⏰ Bu kod 15 daqiqa amal qiladi.
+🔒 Kodni hech kim bilan baham ko'rmang!
+
+Hurmat bilan,
+E-commerce Jamoasi
+    """.strip()
+    
+    html_message = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; padding: 20px; }}
+        .code-box {{ background: #667eea; color: white; font-size: 36px; font-weight: bold; 
+                     padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0; 
+                     letter-spacing: 8px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Assalomu alaykum, {user.get_full_name()}!</h2>
+        <p>E-commerce platformamizga xush kelibsiz! 🎉</p>
+        <p>Emailingizni tasdiqlash uchun quyidagi kodni kiriting:</p>
+        <div class="code-box">{code}</div>
+        <p>⏰ Bu kod <strong>15 daqiqa</strong> amal qiladi.</p>
+        <p>🔒 Kodni hech kim bilan baham ko'rmang!</p>
+    </div>
+</body>
+</html>
+    """.strip()
+    
+    try:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email]
+        )
+        email.attach_alternative(html_message, "text/html")
+        email.send(fail_silently=False)
+        return True
+    except Exception as e:
+        print(f"❌ Email yuborishda xatolik: {e}")
+        return False
+
+
+def send_password_reset_code_email(user, code):
     """
-    Email o'zgartirish uchun tasdiqlash linki yuborish
+    Password reset code yuborish
     
     Args:
         user: User instance
-        new_email: Yangi email manzil
-        verification_url: Verification URL with token
+        code: 6 raqamli kod
+    
+    Returns:
+        bool: Success
     """
-    subject = "Email manzilni o'zgartirish - E-commerce"
-
-    html_message = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>Salom, {user.get_full_name() or user.email}!</h2>
-            
-            <p>Siz email manzilingizni o'zgartirish so'rovini yubordingiz.</p>
-            
-            <p><strong>Hozirgi email:</strong> {user.email}</p>
-            <p><strong>Yangi email:</strong> {new_email}</p>
-            
-            <p>O'zgarishni tasdiqlash uchun quyidagi tugmani bosing:</p>
-            
-            <p style="margin: 30px 0;">
-                <a href="{verification_url}" 
-                   style="background-color: #ffc107; 
-                          color: #000; 
-                          padding: 12px 24px; 
-                          text-decoration: none; 
-                          border-radius: 4px;
-                          display: inline-block;">
-                    Email o'zgarishini tasdiqlash
-                </a>
-            </p>
-            
-            <p>Yoki quyidagi linkni nusxalang:</p>
-            <p style="color: #666; word-break: break-all;">{verification_url}</p>
-            
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                <strong>Muhim:</strong> Bu link 1 soat amal qiladi.
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-                Agar siz bu so'rovni yubormagan bo'lsangiz, 
-                bu emailni e'tiborsiz qoldiring va parolingizni o'zgartiring.
-            </p>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-            
-            <p style="color: #999; font-size: 12px;">
-                E-commerce Team<br>
-                Bu avtomatik email, javob bermang.
-            </p>
-        </body>
-    </html>
-    """
+    subject = '🔑 Parolni Tiklash Kodi - E-commerce'
+    
     plain_message = f"""
-    Salom, {user.get_full_name() or user.email}!
+Assalomu alaykum {user.get_full_name()}!
+
+Parolni tiklash so'rovi qabul qilindi.
+
+Yangi parol o'rnatish uchun quyidagi kodni kiriting:
+
+┌─────────────────┐
+│  KOD: {code}  │
+└─────────────────┘
+
+⏰ Bu kod 15 daqiqa amal qiladi.
+
+⚠️ Agar siz bu so'rovni yubormagan bo'lsangiz, 
+akkauntingiz xavf ostida bo'lishi mumkin!
+
+Hurmat bilan,
+E-commerce Jamoasi
+    """.strip()
     
-    Siz email manzilingizni o'zgartirish so'rovini yubordingiz.
+    html_message = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; padding: 20px; }}
+        .code-box {{ background: #f5576c; color: white; font-size: 36px; font-weight: bold; 
+                     padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0; 
+                     letter-spacing: 8px; }}
+        .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Assalomu alaykum, {user.get_full_name()}!</h2>
+        <p>Parolni tiklash so'rovi qabul qilindi.</p>
+        <p>Yangi parol o'rnatish uchun quyidagi kodni kiriting:</p>
+        <div class="code-box">{code}</div>
+        <div class="warning">
+            <strong>⚠️ XAVFSIZLIK:</strong><br>
+            Agar siz bu so'rovni yubormagan bo'lsangiz, 
+            akkauntingiz xavf ostida bo'lishi mumkin!
+        </div>
+    </div>
+</body>
+</html>
+    """.strip()
     
-    Hozirgi email: {user.email}
-    Yangi email: {new_email}
-    
-    O'zgarishni tasdiqlash uchun quyidagi linkni oching:
-    {verification_url}
-    
-    Bu link 1 soat amal qiladi.
-    
-    Agar siz bu so'rovni yubormaganingizda bo'lsa, 
-    bu emailni e'tiborsiz qoldiring va parolingizni o'zgartiring.
-    
-    E-commerce Team
+    try:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email]
+        )
+        email.attach_alternative(html_message, "text/html")
+        email.send(fail_silently=False)
+        return True
+    except Exception as e:
+        print(f"❌ Email yuborishda xatolik: {e}")
+        return False
+
+
+def send_email_change_code(user, new_email, code):
     """
-    # Yangi email'ga yuborish (eski email emas!)
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[new_email],  # ← Yangi email!
-        html_message=html_message,
-        fail_silently=False,
-    )
+    Email change verification code yuborish
+    
+    Args:
+        user: User instance
+        new_email: Yangi email
+        code: 6 raqamli kod
+    
+    Returns:
+        bool: Success
+    """
+    subject = '📧 Email O\'zgartirish Kodi - E-commerce'
+    
+    plain_message = f"""
+Assalomu alaykum {user.get_full_name()}!
+
+Email o'zgartirish so'rovi qabul qilindi.
+
+Eski email: {user.email}
+Yangi email: {new_email}
+
+O'zgarishni tasdiqlash uchun quyidagi kodni kiriting:
+
+┌─────────────────┐
+│  KOD: {code}  │
+└─────────────────┘
+
+⏰ Bu kod 15 daqiqa amal qiladi.
+
+Hurmat bilan,
+E-commerce Jamoasi
+    """.strip()
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[new_email],  # Yangi email'ga yuboriladi!
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"❌ Email yuborishda xatolik: {e}")
+        return False

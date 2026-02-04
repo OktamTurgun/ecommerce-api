@@ -6,411 +6,217 @@ from rest_framework_simplejwt.tokens import RefreshToken
 User = get_user_model()
 
 
+# ==================== REGISTRATION ====================
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """
-    Yangi user ro'yxatdan o'tkazish uchun serializer
-
-      Features:
-        - Password validation (min 8 char, etc)
-        - Password confirmation check
-        - Secure password storage (hashed)
-        - Email uniqueness check
-    """
-
     password = serializers.CharField(
         write_only=True,
         required=True,
         validators=[validate_password],
         style={"input_type": "password"},
-        help_text="Kamida 8 ta belgi, harflar va raqamlar",
     )
-
-    password2 = serializers.CharField(
-        write_only=True,
-        required=True,
-        label="Parolni tasdiqlash",
-        style={"input_type": "password"},
-        help_text="Yuqoridagi parolni qayta kiriting",
-    )
+    password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = [
-            "id",
-            "email",
-            "password",
-            "password2",
-            "first_name",
-            "last_name",
-            "phone",
-        ]
+        fields = ["id", "email", "password", "password2", "first_name", "last_name", "phone_number"]
         read_only_fields = ["id"]
-        extra_kwargs = {
-            "email": {"required": True, "help_text": "Active email manzil"},
-            "first_name": {"required": False, "help_text": "Ismingiz"},
-        }
 
     def validate_email(self, value):
-        """
-        Email uniqueness check
-
-        Args:
-            value: email address
-
-        Returns:
-            Lowercase email
-
-        Raises:
-            ValidationError: agar email allaqachon mavjud bo'lsa
-        """
         value = value.lower()
-
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "Bu email allaqachon ro'yxatdan o'tgan!"
-            )
+            raise serializers.ValidationError("Bu email allaqachon ro'yxatdan o'tgan!")
         return value
 
     def validate(self, attrs):
-        """
-        Barcha fieldlarni validatsiya qilish
-
-        Bu metod barcha validate_<field> metodlaridan keyin ishlaydi
-
-        Args:
-            attrs: Barcha cleaned data
-
-        Returns:
-            Validated attrs
-        """
-        # Password confirmation check
         if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password2": "Parollar bir xil emas!"}
-            )
+            raise serializers.ValidationError({"password2": "Parollar bir xil emas!"})
         return attrs
 
     def create(self, validated_data):
-        """
-        Yangi user yaratish
-
-        Args:
-            validated_data: Tekshirilgan ma'lumotlar
-
-        Returns:
-            Yangi User obyekti
-        """
         validated_data.pop("password2")
-
         user = User.objects.create_user(
-            email=validated_data["email"],
-            password=validated_data["password"],
+            email=validated_data.get("email"),
+            password=validated_data.get("password"),
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
-            phone=validated_data.get("phone", ""),
+            phone_number=validated_data.get("phone_number", "")
         )
         return user
 
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Ro'yxatdan o'tish muvaffaqiyatli. Verification code yuborildi",
+            "data": {
+                "user_id": str(instance.id),
+                "email": instance.email,
+                "full_name": instance.get_full_name(),
+                "phone_number": instance.phone_number,
+                "auth_status": getattr(instance, "auth_status", "new"),
+            }
+        }
 
+
+# ==================== LOGIN ====================
 class UserLoginSerializer(serializers.Serializer):
-    """
-    User login qilish uchun
-
-    Faqat email va password qabul qiladi
-    Model bilan bog'lanmagan (Serializer, ModelSerializer emas)
-    """
-
-    email = serializers.EmailField(
-        required=True,
-        help_text="Ro'yxatdan o'tgan email",
-    )
-
-    password = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={"input_type": "password"},
-        help_text="Parolingiz",
-    )
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, style={"input_type": "password"})
 
     def validate(self, attrs):
-        """
-        Email va password to'g'riligini tekshirish
-
-        Returns:
-            attrs with 'user' key
-        """
-        email = attrs.get("email", "").lower()
+        email = attrs.get("email").lower()
         password = attrs.get("password")
-
-        # 1. User borligini tekshirish
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError(
-                {"email": "Bu email ro'yxatdan o'tmagan!"}
-            )
+            raise serializers.ValidationError({"email": "Bu email ro'yxatdan o'tmagan!"})
 
-        # 2. Password to'g'riligini tekshirish
         if not user.check_password(password):
-            raise serializers.ValidationError({
-                'password': 'Parol noto\'g\'ri'
-            })
-        
-        # 3. User active ekanligini tekshirish
+            raise serializers.ValidationError({"password": "Parol noto'g'ri"})
+
         if not user.is_active:
-            raise serializers.ValidationError({
-                'email': 'Bu akkount faol emas! Admin bilan bog\'laning.'
-            })
-        
-        attrs['user'] = user
+            raise serializers.ValidationError({"email": "Akkount faol emas"})
+
+        attrs["user"] = user
         return attrs
 
-class UserSerializer(serializers.ModelSerializer):
-    """
-      User profil ma'lumotlari uchun
-      
-      Ishlatiladi:
-      - GET /api/users/profile/ - ko'rish
-      - PUT/PATCH /api/users/profile/ - yangilash
-    """
+    def to_representation(self, instance):
+        user = instance.get("user")
+        tokens = RefreshToken.for_user(user)
+        return {
+            "success": True,
+            "message": "Login muvaffaqiyatli",
+            "data": {
+                "user_id": str(user.id),
+                "email": user.email,
+                "full_name": user.get_full_name(),
+                "tokens": {
+                    "access": str(tokens.access_token),
+                    "refresh": str(tokens),
+                }
+            }
+        }
 
+
+# ==================== PROFILE ====================
+class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
-            'id',
-            'email',
-            'first_name',
-            'last_name',
-            'full_name',
-            'phone',
-            'address',
-            'city',
-            'country',
-            'postal_code',
-            'date_joined',
-            'is_active',
+            "id", "email", "first_name", "last_name", "full_name",
+            "phone_number", "address", "city", "country", "postal_code",
+            "date_joined", "is_active"
         ]
-        read_only_fields = [
-            'id',
-            'email',
-            'date_joined',
-            'is_active',
-        ]
+        read_only_fields = ["id", "email", "date_joined", "is_active"]
 
     def get_full_name(self, obj):
-        """
-          Custom field - full_name
-          
-          Args:
-              obj: User instance
-          
-          Returns:
-              "John Doe" yoki email
-        """
         return obj.get_full_name()
-    
+
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "User profile",
+            "data": super().to_representation(instance)
+        }
+
+
+# ==================== CHANGE PASSWORD ====================
 class ChangePasswordSerializer(serializers.Serializer):
-    """
-      Parolni o'zgartirish uchun
-      
-      3 ta field:
-      - old_password: Hozirgi parol (verification)
-      - new_password: Yangi parol
-      - new_password2: Yangi parol tasdiqlash
-    """
-    old_password = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={'input_type': 'password'},
-        help_text='Hozirgi parol',
-    )
-
-    new_password = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={'input_type': 'password'},
-        validators=[validate_password],
-        help_text='Yangi parol (min 8 char)',
-    )
-
-    new_password2 = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={'input_type': 'password'},
-        help_text='Yangi parolni tasdiqlang'
-    )
+    old_password = serializers.CharField(write_only=True, style={"input_type": "password"})
+    new_password = serializers.CharField(write_only=True, style={"input_type": "password"}, validators=[validate_password])
+    new_password2 = serializers.CharField(write_only=True, style={"input_type": "password"})
 
     def validate_old_password(self, value):
-        """
-            Eski parolni tekshirish
-        """
-        user = self.context['request'].user
-
+        user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError(
-                "Eski parol noto'g'ri!"
-            )
+            raise serializers.ValidationError("Eski parol noto'g'ri!")
         return value
+
     def validate(self, attrs):
-        """
-          Yangi parollar bir xilligini tekshirish
-        """
-        if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError({
-                'new_password2': 'Yangi parollar bir xil emas!'
-            })
+        if attrs["new_password"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "Yangi parollar bir xil emas!"})
         return attrs
-    
+
     def save(self, **kwargs):
-        """
-          Yangi parolni saqlash
-          
-          Returns:
-              Updated user
-        """
-        user = self.context['request'].user
-        user.set_password(self.validated_data['new_password'])
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
         user.save()
         return user
-    
-class UserTokenSerializer(serializers.Serializer):
-    """
-      Login/Register response uchun
-      
-      User + Tokens birga qaytariladi
-    """
-    user = UserSerializer()
-    tokens = serializers.DictField()
-    message = serializers.CharField()
 
-# ============ PASSWORD RESET ============
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Parol muvaffaqiyatli yangilandi"
+        }
+
+
+# ==================== FORGOT PASSWORD ====================
 class ForgotPasswordSerializer(serializers.Serializer):
-    """
-    Forgot password - email yuborish uchun
-    
-    Request:
-    {
-        "email": "user@example.com"
-    }
-    """
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField()
 
-    def validate_email(self, value):
-        """
-        Email borligini tekshirish
-        
-        Note: Security - email mavjud emasligini bildirmaymiz
-        """
-        return value.lower()
-    
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Agar email mavjud bo'lsa, sizga tiklash link yuborildi"
+        }
+
+
+# ==================== RESET PASSWORD ====================
 class ResetPasswordSerializer(serializers.Serializer):
-    """
-    Password reset - yangi parol o'rnatish
-    
-    Request:
-    {
-        "uidb64": "MQ",
-        "token": "abc123...",
-        "new_password": "NewPass123!",
-        "new_password2": "NewPass123!"
-    }
-    """
-    uidb64 = serializers.CharField(required=True)
-    token = serializers.CharField(required=True)
-    new_password = serializers.CharField(
-        required=True,
-        write_only=True,
-        validators=[validate_password],
-        style={'input_type': 'password'}
-    )
-    new_password2 = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={'input_type': 'password'}
-    ) 
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    new_password2 = serializers.CharField(write_only=True)
+
     def validate(self, attrs):
-        """
-        Parollar bir xilligini tekshirish
-        """
-        if attrs['new_password'] != attrs['New_password2']:
-            raise serializers.ValidationError({
-                'new_password': "Parollar bir xil emas!"
-            })   
+        if attrs["new_password"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "Parollar bir xil emas!"})
         return attrs
 
-# ============ EMAIL VERIFICATION ============
-class ResendVerificationSerializer(serializers.Serializer):
-    """
-    Verification email'ni qayta yuborish
-    
-    Request:
-    {
-        "email": "user@example.com"
-    }
-    """
-    email = serializers.EmailField(required=True)
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Parol muvaffaqiyatli tiklandi"
+        }
 
-    def validate_email(self, value):
-        return value.lower()
-    
-# ============ EMAIL CHANGE ============
+
+# ==================== EMAIL CHANGE ====================
 class ChangeEmailSerializer(serializers.Serializer):
-    """
-    Email o'zgartirish so'rovi
-    
-    Request:
-    {
-        "new_email": "newemail@example.com",
-        "password": "CurrentPass123!"
-    }
-    """
-    new_email = serializers.EmailField(required=True)
-    password = serializers.CharField(
-        required=True,
-        write_only=True,
-        style={'input_type': 'password'}
-    )   
+    new_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, style={"input_type": "password"})
+
     def validate_new_email(self, value):
-        """
-        Yangi email tekshirish
-        """
-        value=value.lower()
-
-        # Email allaqqachon ishlatilganmi?
+        value = value.lower()
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                'Bu email allaqochon ishlatilmoqda!'
-            )
+            raise serializers.ValidationError("Bu email allaqochon ishlatilmoqda!")
         return value
-    
+
     def validate_password(self, value):
-        """
-        Hozirgi parolni tekshirish
-        """
-        user = self.context['request'].user
-
+        user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError(
-                'Parol noto\'g\'ri!'
-            )
+            raise serializers.ValidationError("Parol noto'g'ri!")
         return value
 
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": f"Email o'zgarishi so'rovi qabul qilindi: {instance.get('new_email', '')}"
+        }
+
+
+# ==================== VERIFY EMAIL CHANGE ====================
 class VerifyEmailChangeSerializer(serializers.Serializer):
-    """
-    Email o'zgarishini tasdiqlash
-    
-    Request:
-    {
-        "uidb64": "MQ",
-        "token": "abc123...",
-        "new_email": "newemail@example.com"
-    }
-    """
-    uidb64 = serializers.CharField(required=True)
-    token = serializers.CharField(required=True)
-    new_email = serializers.EmailField(required=True)
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+    new_email = serializers.EmailField()
 
     def validate_new_email(self, value):
         return value.lower()
+
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Email muvaffaqiyatli tasdiqlandi",
+            "data": {"new_email": instance.get("new_email")}
+        }
