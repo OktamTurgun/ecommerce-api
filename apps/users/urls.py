@@ -24,7 +24,7 @@ urlpatterns = [
 
     # ============ EMAIL VERIFICATION ============
     path("verify-email/", VerifyEmailView.as_view(), name='verify-email'),
-    path("resend-verification/", ResendVerificationView.as_view(), name='sesend-verification'),
+    path("resend-verification/", ResendVerificationView.as_view(), name='resend-verification'),
 
     # ============ PROFILE ============
     path("profile/", UserProfileView.as_view(), name="profile"),

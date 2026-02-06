@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
+    ResendVerificationSerializer,
     UserRegistrationSerializer,
     UserLoginSerializer,
     ForgotPasswordSerializer,
@@ -42,6 +43,8 @@ class UserRegistrationView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+# apps/users/views.py
+
 class UserLoginView(APIView):
     """User login va JWT token olish"""
     permission_classes = [AllowAny]
@@ -56,6 +59,11 @@ class UserLoginView(APIView):
         user, tokens = AuthService.login_user(email, password)
         if not user:
             return Response({"error": "Email yoki parol noto'g'ri!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # QOSHILDI: Update last_login
+        from django.utils import timezone
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
 
         return Response({
             "user": UserSerializer(user).data,
@@ -131,6 +139,30 @@ class ForgotPasswordView(APIView):
 
         return Response({"message": "Agar email ro'yxatdan o'tgan bo'lsa, parolni tiklash uchun ko'rsatmalar yuborildi."})
     
+# class ResetPasswordView(APIView):
+#     """Yangi parol o'rnatish"""
+#     permission_classes = [AllowAny]
+
+#     def post(self, request):
+#         serializer = ResetPasswordSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+
+#         uidb64 = serializer.validated_data['uidb64']
+#         token = serializer.validated_data['token']
+#         new_password = serializer.validated_data['new_password']
+
+#         user = get_user_from_uid(uidb64)
+#         if not user:
+#             return Response({"error": "Noto'g'ri link!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not VerificationService.verify_email(user, token):
+#             return Response({"error": "Link muddati o'tgan yoki noto'g'ri!"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+#         PasswordService.reset_password(user, new_password)
+
+#         return Response({"message": "Parol muvaffaqiyatli o'zgartirildi! Endi login qilishingiz mumkin."})
+    
 class ResetPasswordView(APIView):
     """Yangi parol o'rnatish"""
     permission_classes = [AllowAny]
@@ -147,7 +179,8 @@ class ResetPasswordView(APIView):
         if not user:
             return Response({"error": "Noto'g'ri link!"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not VerificationService.verify_email(user, token):
+        # TO'G'RILANDI: Password reset tokenini tekshirish
+        if not AuthService.verify_password_reset_token(user, token):
             return Response({"error": "Link muddati o'tgan yoki noto'g'ri!"}, status=status.HTTP_400_BAD_REQUEST)
 
         PasswordService.reset_password(user, new_password)
@@ -235,13 +268,14 @@ class VerifyEmailView(APIView):
             return Response({
                 "error": message
             }, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class ResendVerificationView(APIView):
     """Verification email'ni qayta yuborish"""
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = ChangeEmailSerializer(data=request.data)
+        # TO'G'RILANDI: Endi to'g'ri serializer ishlatiladi
+        serializer = ResendVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data['email']
