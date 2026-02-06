@@ -220,3 +220,14 @@ class VerifyEmailChangeSerializer(serializers.Serializer):
             "message": "Email muvaffaqiyatli tasdiqlandi",
             "data": {"new_email": instance.get("new_email")}
         }
+
+# ==================== RESEND VERIFICATION ====================
+class ResendVerificationSerializer(serializers.Serializer):
+    """Serializer for resending verification email."""
+    email = serializers.EmailField(required=True)
+
+    def to_representation(self, instance):
+        return {
+            "success": True,
+            "message": "Agar email ro'yxatdan o'tgan bo'lsa, tasdiqlash linki yuborildi."
+        }
