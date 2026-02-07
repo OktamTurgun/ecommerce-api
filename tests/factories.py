@@ -213,3 +213,24 @@ def create_authenticated_client(user=None):
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     
     return client, user
+
+# ==================== CATEGORY FACTORY ====================
+class CategoryFactory(DjangoModelFactory):
+    """
+    Factory for creating test Category instances.
+    
+    Usage:
+        category = CategoryFactory()
+        category = CategoryFactory(name='Electronics')
+        root = CategoryFactory(parent=None)
+        child = CategoryFactory(parent=root)
+    """
+    
+    class Meta:
+        model = 'products.Category'
+    
+    name = factory.Sequence(lambda n: f'Category {n}')
+    slug = factory.LazyAttribute(lambda obj: factory.Faker('slug').evaluate(None, None, {'locale': None}))
+    description = factory.Faker('text', max_nb_chars=200)
+    parent = None
+    is_active = True
