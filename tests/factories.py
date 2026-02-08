@@ -234,3 +234,29 @@ class CategoryFactory(DjangoModelFactory):
     description = factory.Faker('text', max_nb_chars=200)
     parent = None
     is_active = True
+
+# ==================== PRODUCT FACTORY ====================
+class ProductFactory(DjangoModelFactory):
+    """
+    Factory for creating test Product instances.
+    
+    Usage:
+        product = ProductFactory()
+        product = ProductFactory(name='iPhone 15', price=Decimal('999.99'))
+        product = ProductFactory(category=my_category, stock=100)
+    """
+    
+    class Meta:
+        model = 'products.Product'
+    
+    name = factory.Sequence(lambda n: f'Product {n}')
+    slug = factory.LazyAttribute(lambda obj: factory.Faker('slug').evaluate(None, None, {'locale': None}))
+    description = factory.Faker('text', max_nb_chars=500)
+    category = factory.SubFactory(CategoryFactory)
+    price = factory.Faker('pydecimal', left_digits=4, right_digits=2, positive=True, min_value=1)
+    discount_price = None
+    stock = factory.Faker('random_int', min=0, max=100)
+    sku = factory.Sequence(lambda n: f'SKU-{n:05d}')
+    is_active = True
+    is_featured = False
+

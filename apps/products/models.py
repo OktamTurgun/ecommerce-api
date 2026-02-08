@@ -4,6 +4,7 @@ Product Category Model
 Hierarchical category structure for organizing products.
 Supports parent-child relationships for subcategories.
 """
+from decimal import Decimal
 from django.db import models
 from django.utils.text import slugify
 from django.utils import timezone
@@ -157,3 +158,194 @@ class Category(models.Model):
             int: Number of products
         """
         return self.products.filter(is_active=True).count()
+    
+class Product(models.Model):
+    """
+    Product model for e-commerce catalog.
+    
+    Features:
+    - Name, description, price
+    - Category relationship
+    - Stock tracking
+    - Discount pricing
+    - Active/Featured status
+    - Auto-generated slugs
+    - SKU support
+    
+    Examples:
+        product = Product.objects.create(
+            name='iPhone 15 Pro',
+            price=Decimal('999.99'),
+            category=electronics,
+            stock=50
+        )
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
+    name = models.CharField(
+        max_length=200,
+        help_text='Product name'
+    )
+    
+    slug = models.SlugField(
+        max_length=200,
+        unique=True,
+        blank=True,
+        help_text='URL-friendly version of name'
+    )
+    
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Product description'
+    )
+    
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='products',
+        help_text='Product category'
+    )
+    
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text='Regular price'
+    )
+    
+    discount_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Discounted price (optional)'
+    )
+    
+    stock = models.PositiveIntegerField(
+        default=0,
+        help_text='Available quantity'
+    )
+    
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='Stock Keeping Unit'
+    )
+    
+    is_active = models.BooleanField(
+        default=True,
+        help_text='Is product active and visible?'
+    )
+    
+    is_featured = models.BooleanField(
+        default=False,
+        help_text='Is this a featured product?'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'products'
+        ordering = ['-created_at']  # Newest first
+        verbose_name = 'Product'
+        verbose_name_plural = 'Products'
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['category']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_featured']),
+            models.Index(fields=['price']),
+        ]
+    
+    def __str__(self):
+        """String representation: product name."""
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to auto-generate slug from name.
+        """
+        if not self.slug:
+            self.slug = slugify(self.name)
+        
+        super().save(*args, **kwargs)
+    
+    def clean(self):
+        """
+        Custom validation.
+        
+        Validates:
+        - Price must be positive
+        - Stock must be non-negative
+        - Discount price must be less than regular price
+        """
+        from django.core.exceptions import ValidationError
+        
+        # Price validation
+        if self.price and self.price <= 0:
+            raise ValidationError({'price': 'Price must be greater than 0'})
+        
+        # Stock validation
+        if self.stock < 0:
+            raise ValidationError({'stock': 'Stock cannot be negative'})
+        
+        # Discount price validation
+        if self.discount_price:
+            if self.discount_price >= self.price:
+                raise ValidationError({
+                    'discount_price': 'Discount price must be less than regular price'
+                })
+    
+    @property
+    def has_discount(self):
+        """Check if product has a discount."""
+        return self.discount_price is not None and self.discount_price > 0
+    
+    @property
+    def is_in_stock(self):
+        """Check if product is in stock."""
+        return self.stock > 0
+    
+    def get_price(self):
+        """
+        Get the current selling price.
+        
+        Returns discount price if available, otherwise regular price.
+        """
+        if self.has_discount:
+            return self.discount_price
+        return self.price
+    
+    @property
+    def savings(self):
+        """
+        Calculate savings amount.
+        
+        Returns:
+            Decimal: Amount saved if discount is active, otherwise 0
+        """
+        if self.has_discount:
+            return self.price - self.discount_price
+        return Decimal('0.00')
+    
+    @property
+    def discount_percentage(self):
+        """
+        Calculate discount percentage.
+        
+        Returns:
+            int: Discount percentage (0-100)
+        """
+        if self.has_discount:
+            return int((self.savings / self.price) * 100)
+        return 0
