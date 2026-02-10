@@ -24,6 +24,7 @@ urlpatterns = [
 
     # API-v1 endpoints
     path("api/users/", include('apps.users.urls')),
+    path('api/products/', include('apps.products.urls')),
 
     # TODO: Keyingi app'lar
     # path('api/products/', include('apps.products.urls')),
