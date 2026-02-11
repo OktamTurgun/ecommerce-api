@@ -158,7 +158,8 @@ class Category(models.Model):
             int: Number of products
         """
         return self.products.filter(is_active=True).count()
-    
+
+
 class Product(models.Model):
     """
     Product model for e-commerce catalog.
@@ -349,3 +350,96 @@ class Product(models.Model):
         if self.has_discount:
             return int((self.savings / self.price) * 100)
         return 0
+    
+    def get_primary_image(self):
+        """
+        Get the primary image for this product.
+        
+        Returns:
+            ProductImage: Primary image or None
+        """
+        return self.images.filter(is_primary=True).first()
+
+
+class ProductImage(models.Model):
+    """
+    Product image model for multiple images per product.
+    
+    Features:
+    - Multiple images per product
+    - Image ordering
+    - Primary image selection
+    - Alt text for accessibility/SEO
+    - Auto timestamps
+    
+    Examples:
+        # Add primary image
+        image = ProductImage.objects.create(
+            product=product,
+            image='products/iphone-front.jpg',
+            alt_text='iPhone 15 Pro front view',
+            is_primary=True,
+            order=1
+        )
+        
+        # Get product's primary image
+        primary = product.get_primary_image()
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='images',
+        help_text='Product this image belongs to'
+    )
+    
+    image = models.ImageField(
+        upload_to='products/%Y/%m/%d/',
+        help_text='Product image file'
+    )
+    
+    alt_text = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Alternative text for accessibility and SEO'
+    )
+    
+    is_primary = models.BooleanField(
+        default=False,
+        help_text='Mark as primary/main product image'
+    )
+    
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text='Display order (lower numbers first)'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['order', 'created_at']
+        indexes = [
+            models.Index(fields=['product', 'order']),
+            models.Index(fields=['product', 'is_primary']),
+        ]
+        verbose_name = 'Product Image'
+        verbose_name_plural = 'Product Images'
+    
+    def __str__(self):
+        """String representation."""
+        return f'{self.product.name} - Image {self.order}'
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to auto-generate alt_text if not provided.
+        """
+        if not self.alt_text:
+            self.alt_text = f'{self.product.name} image {self.order}'
+        
+        super().save(*args, **kwargs)

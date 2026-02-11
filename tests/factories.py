@@ -214,6 +214,7 @@ def create_authenticated_client(user=None):
     
     return client, user
 
+
 # ==================== CATEGORY FACTORY ====================
 class CategoryFactory(DjangoModelFactory):
     """
@@ -234,6 +235,7 @@ class CategoryFactory(DjangoModelFactory):
     description = factory.Faker('text', max_nb_chars=200)
     parent = None
     is_active = True
+
 
 # ==================== PRODUCT FACTORY ====================
 class ProductFactory(DjangoModelFactory):
@@ -260,3 +262,29 @@ class ProductFactory(DjangoModelFactory):
     is_active = True
     is_featured = False
 
+
+class ProductImageFactory(DjangoModelFactory):
+    """
+    Factory for creating test ProductImage instances.
+    
+    Usage:
+        image = ProductImageFactory()
+        image = ProductImageFactory(product=my_product, is_primary=True)
+        image = ProductImageFactory(order=1)
+    """
+    
+    class Meta:
+        model = 'products.ProductImage'
+    
+    product = factory.SubFactory(ProductFactory)
+    image = factory.django.ImageField(
+        filename='product_image.jpg',
+        width=800,
+        height=600,
+        color='blue'
+    )
+    alt_text = factory.LazyAttribute(
+        lambda obj: f'{obj.product.name} image'
+    )
+    is_primary = False
+    order = factory.Sequence(lambda n: n)
