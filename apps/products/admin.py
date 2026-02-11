@@ -8,8 +8,39 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Count
-from apps.products.models import Category, Product
+from apps.products.models import Category, Product, ProductImage
 
+class ProductImageInline(admin.TabularInline):
+    """
+    Inline admin for ProductImage.
+    
+    Allows managing product images directly from Product admin page.
+    Features:
+    - Image preview
+    - Primary image selection
+    - Order management
+    - Alt text editing
+    """
+    
+    model = ProductImage
+    extra = 1  # Show 1 empty form by default
+    fields = ['image_preview', 'image', 'alt_text', 'is_primary', 'order']
+    readonly_fields = ['image_preview']
+    
+    def image_preview(self, obj):
+        """
+        Display thumbnail preview of image.
+        
+        Shows 100x100 preview if image exists.
+        """
+        if obj.image:
+            return format_html(
+                '<img src="{}" width="100" height="100" style="object-fit: cover; border-radius: 4px;" />',
+                obj.image.url
+            )
+        return "No image"
+    
+    image_preview.short_description = 'Preview'
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -111,6 +142,7 @@ class ProductAdmin(admin.ModelAdmin):
     - Inline editing for stock and status
     - Auto-generate slug from name
     """
+    inlines = [ProductImageInline]
     
     list_display = [
         'name',
