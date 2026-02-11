@@ -219,3 +219,9 @@ __marimo__/
 *.avi 
 *.mov
 *.mkv
+
+!screenshots/
+!screenshots/*.png
+!screenshots/*.jpg
+!screenshots/*.jpeg
+!screenshots/*.gif
