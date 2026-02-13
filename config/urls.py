@@ -25,11 +25,11 @@ urlpatterns = [
     # API-v1 endpoints
     path("api/users/", include('apps.users.urls')),
     path('api/products/', include('apps.products.urls')),
+    path('api/cart/', include('apps.cart.urls')),
 
     # TODO: Keyingi app'lar
-    # path('api/products/', include('apps.products.urls')),
-    # path('api/orders/', include('apps.orders.urls')),
-    # path('api/cart/', include('apps.cart.urls')),
+    # path('api/orders/', include('apps.orders.urls')), 
+    # path('api/payments/', include('apps.payments.urls')),
     # path('api/reviews/', include('apps.reviews.urls')),
 ]
 

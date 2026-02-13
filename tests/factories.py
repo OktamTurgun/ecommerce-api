@@ -263,6 +263,7 @@ class ProductFactory(DjangoModelFactory):
     is_featured = False
 
 
+# ==================== PRODUCT IMAGE FACTORY ====================
 class ProductImageFactory(DjangoModelFactory):
     """
     Factory for creating test ProductImage instances.
@@ -288,3 +289,41 @@ class ProductImageFactory(DjangoModelFactory):
     )
     is_primary = False
     order = factory.Sequence(lambda n: n)
+
+# ==================== CART FACTORIES ====================
+class CartFactory(DjangoModelFactory):
+    """
+    Factory for creating test Cart instances.
+    
+    Usage:
+        cart = CartFactory()  # Anonymous cart
+        cart = CartFactory(user=my_user)  # User cart
+        cart = CartFactory(session_key='abc123')  # Session cart
+    """
+    
+    class Meta:
+        model = 'cart.Cart'
+    
+    user = None
+    session_key = factory.Sequence(lambda n: f'session_{n}')
+
+
+class CartItemFactory(DjangoModelFactory):
+    """
+    Factory for creating test CartItem instances.
+    
+    Usage:
+        item = CartItemFactory()
+        item = CartItemFactory(cart=my_cart, product=my_product)
+        item = CartItemFactory(quantity=5, price_at_add=Decimal('99.99'))
+    """
+    
+    class Meta:
+        model = 'cart.CartItem'
+    
+    cart = factory.SubFactory(CartFactory)
+    product = factory.SubFactory(ProductFactory)
+    quantity = 1
+    price_at_add = factory.LazyAttribute(
+        lambda obj: obj.product.price
+    )
