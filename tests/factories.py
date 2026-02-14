@@ -327,3 +327,46 @@ class CartItemFactory(DjangoModelFactory):
     price_at_add = factory.LazyAttribute(
         lambda obj: obj.product.price
     )
+
+class OrderFactory(DjangoModelFactory):
+    """
+    Factory for creating test Order instances.
+    
+    Usage:
+        order = OrderFactory()
+        order = OrderFactory(user=my_user)
+        order = OrderFactory(status='PROCESSING')
+    """
+    
+    class Meta:
+        model = 'orders.Order'
+    
+    user = factory.SubFactory(UserFactory)
+    status = 'PENDING'
+    shipping_address = factory.Faker('street_address')
+    shipping_city = factory.Faker('city')
+    shipping_postal_code = factory.Faker('postcode')
+    shipping_country = 'USA'
+    notes = ''
+    tracking_number = ''
+
+
+class OrderItemFactory(DjangoModelFactory):
+    """
+    Factory for creating test OrderItem instances.
+    
+    Usage:
+        item = OrderItemFactory()
+        item = OrderItemFactory(order=my_order, product=my_product)
+        item = OrderItemFactory(quantity=5, price=Decimal('99.99'))
+    """
+    
+    class Meta:
+        model = 'orders.OrderItem'
+    
+    order = factory.SubFactory(OrderFactory)
+    product = factory.SubFactory(ProductFactory)
+    product_name = factory.LazyAttribute(lambda obj: obj.product.name)
+    product_sku = factory.LazyAttribute(lambda obj: obj.product.sku)
+    price = factory.LazyAttribute(lambda obj: obj.product.price)
+    quantity = 1
