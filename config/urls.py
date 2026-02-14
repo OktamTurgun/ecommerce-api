@@ -26,9 +26,9 @@ urlpatterns = [
     path("api/users/", include('apps.users.urls')),
     path('api/products/', include('apps.products.urls')),
     path('api/cart/', include('apps.cart.urls')),
+    path('api/orders/', include('apps.orders.urls')),
 
-    # TODO: Keyingi app'lar
-    # path('api/orders/', include('apps.orders.urls')), 
+    # TODO: Keyingi app'lar 
     # path('api/payments/', include('apps.payments.urls')),
     # path('api/reviews/', include('apps.reviews.urls')),
 ]
