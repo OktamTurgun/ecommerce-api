@@ -16,6 +16,7 @@ Example:
     # New way (simple):
     user = UserFactory()
 """
+from decimal import Decimal
 import factory
 from factory.django import DjangoModelFactory
 from faker import Faker
@@ -370,3 +371,26 @@ class OrderItemFactory(DjangoModelFactory):
     product_sku = factory.LazyAttribute(lambda obj: obj.product.sku)
     price = factory.LazyAttribute(lambda obj: obj.product.price)
     quantity = 1
+
+class PaymentFactory(DjangoModelFactory):
+    """
+    Factory for creating test Payment instances.
+    
+    Usage:
+        payment = PaymentFactory()
+        payment = PaymentFactory(order=my_order)
+        payment = PaymentFactory(status='SUCCEEDED', amount=Decimal('999.99'))
+    """
+    
+    class Meta:
+        model = 'payments.Payment'
+    
+    order = factory.SubFactory(OrderFactory)
+    stripe_payment_intent_id = factory.Sequence(lambda n: f'pi_test_{n}')
+    stripe_client_secret = factory.Sequence(lambda n: f'pi_test_{n}_secret')
+    amount = factory.LazyAttribute(lambda obj: obj.order.total_amount if hasattr(obj, 'order') else Decimal('100.00'))
+    currency = 'usd'
+    status = 'PENDING'
+    payment_method_type = ''
+    payment_method_last4 = ''
+    failure_message = ''

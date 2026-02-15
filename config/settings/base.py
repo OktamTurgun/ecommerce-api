@@ -4,6 +4,13 @@ Base settings - umumiy sozlamalar
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from dotenv import load_dotenv
+import os
+
+# Stripe Config (add at bottom)
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_API_VERSION = '2023-10-16'
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
