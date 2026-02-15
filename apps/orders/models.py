@@ -198,12 +198,14 @@ class OrderItem(models.Model):
     product_sku = models.CharField(
         max_length=100,
         blank=True,
+        null=True, # Bazada NULL bo'lishiga ruxsat beramiz
         help_text='Product SKU at order time'
     )
     
     price = models.DecimalField(
-        max_digits=10,
+        max_digits=10, 
         decimal_places=2,
+        default=Decimal('0.00'),
         help_text='Price at order time'
     )
     
@@ -229,12 +231,19 @@ class OrderItem(models.Model):
         """String representation."""
         return f'{self.quantity}x {self.product_name}'
     
+    def save(self, *args, **kwargs):
+        if self.product and not self.product_name:
+            self.product_name = self.product.name
+        if self.product and not self.product_sku:
+            self.product_sku = getattr(self.product, 'sku', None)
+        if self.product and (self.price == Decimal('0.00') or self.price is None):
+            # Mahsulotning joriy narxini snapshot sifatida olamiz
+            self.price = getattr(self.product, 'price', Decimal('0.00'))
+        
+        super().save(*args, **kwargs)
+    
+    
     @property
     def subtotal(self):
-        """
-        Calculate item subtotal.
-        
-        Returns:
-            Decimal: quantity × price
-        """
-        return self.quantity * self.price
+        # Endi bu yerda price har doim kamida 0.00 bo'lishi kafolatlanadi
+        return (self.quantity or 0) * self.price
