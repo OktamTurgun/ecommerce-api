@@ -8,6 +8,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from apps.products.views import CategoryViewSet, ProductViewSet
+from apps.reviews.views import ProductReviewsViewSet  # ← ADD THIS
 
 app_name = 'products'
 
@@ -21,6 +22,13 @@ router.register(r'products', ProductViewSet, basename='product')
 # URL patterns
 urlpatterns = [
     path('', include(router.urls)),
+    
+    # Product Reviews (nested route)
+    path(
+        'products/<uuid:product_pk>/reviews/',
+        ProductReviewsViewSet.as_view({'get': 'list', 'post': 'create'}),
+        name='product-reviews-list'
+    ),
 ]
 
 """
@@ -45,4 +53,8 @@ Products:
     DELETE /api/products/products/{id}/             - Delete product (admin)
     GET    /api/products/products/featured/         - Featured products
     GET    /api/products/products/in_stock/         - In-stock products
+
+Product Reviews (nested):
+    GET    /api/products/{id}/reviews/              - List product reviews
+    POST   /api/products/{id}/reviews/              - Create review
 """
