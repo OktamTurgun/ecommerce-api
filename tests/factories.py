@@ -394,3 +394,21 @@ class PaymentFactory(DjangoModelFactory):
     payment_method_type = ''
     payment_method_last4 = ''
     failure_message = ''
+
+class ReviewFactory(DjangoModelFactory):
+    """
+    Factory for creating test Review instances.
+    
+    Usage:
+        review = ReviewFactory()
+        review = ReviewFactory(user=my_user, product=my_product)
+        review = ReviewFactory(rating=5, comment='Excellent!')
+    """
+    
+    class Meta:
+        model = 'reviews.Review'
+    
+    user = factory.SubFactory(UserFactory)
+    product = factory.SubFactory(ProductFactory)
+    rating = 5
+    comment = factory.Faker('text', max_nb_chars=200)
