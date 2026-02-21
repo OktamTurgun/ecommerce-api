@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'drf_spectacular',  # API documentation
+    'django_filters',
     
     # Local apps
     'apps.cart',
@@ -118,6 +119,12 @@ REST_FRAMEWORK = {
 
     # ============ SWAGGER SETTINGS ============
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
 }
 
 # JWT Settings

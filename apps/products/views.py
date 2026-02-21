@@ -5,6 +5,8 @@ Product Views
 API ViewSets for Category and Product models.
 Provides CRUD operations via REST API.
 """
+
+from django.db.models import Q, Avg
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -167,95 +169,78 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Product CRUD operations.
+    ViewSet for Product CRUD operations with search and filtering.
     
-    Endpoints:
-    - GET    /api/products/                - List products
-    - GET    /api/products/{id}/           - Retrieve product
-    - POST   /api/products/                - Create product (Admin)
-    - PUT    /api/products/{id}/           - Update product (Admin)
-    - PATCH  /api/products/{id}/           - Partial update (Admin)
-    - DELETE /api/products/{id}/           - Delete product (Admin)
+    Features:
+    - Search: ?search=query (searches name and description)
+    - Filter by category: ?category=uuid
+    - Filter by price range: ?min_price=X&max_price=Y
+    - Filter by rating: ?min_rating=X
+    - Sort: ?ordering=price/-price/name/-created_at
+    - Combined filters supported
     
-    Permissions:
-    - List/Retrieve: Public
-    - Create/Update/Delete: Admin only
-    
-    Filtering:
-    - category: Filter by category ID
-    - is_active: Filter by active status
-    - is_featured: Filter featured products
-    - price_min: Minimum price
-    - price_max: Maximum price
-    
-    Search:
-    - name, description, sku
-    
-    Ordering:
-    - name, price, created_at (default: newest first)
-    
-    Example:
-        GET /api/products/?category={category_id}
-        GET /api/products/?is_featured=true
-        GET /api/products/?price_min=100&price_max=500
-        GET /api/products/?search=iphone
+    Examples:
+        GET /api/products/products/?search=iphone
+        GET /api/products/products/?category=uuid&min_price=500&max_price=1000
+        GET /api/products/products/?min_rating=4&ordering=-price
     """
     
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    lookup_field = 'pk'
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
-    # Filters
+    # Enable filters
     filter_backends = [
-        DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
+        DjangoFilterBackend,
     ]
-    filterset_fields = ['category', 'is_active', 'is_featured']
-    search_fields = ['name', 'description', 'sku']
-    ordering_fields = ['name', 'price', 'created_at', 'stock']
-    ordering = ['-created_at']  # Default: newest first
     
-    def get_permissions(self):
-        """
-        Set permissions based on action.
-        
-        - List/Retrieve: Public
-        - Create/Update/Delete: Admin only
-        """
-        if self.action in ['list', 'retrieve']:
-            permission_classes = []  # Public access
-        else:
-            permission_classes = [IsAdminUser]  # Admin only
-        
-        return [permission() for permission in permission_classes]
+    # Search fields
+    search_fields = ['name', 'description']
+    
+    # Ordering fields
+    ordering_fields = ['name', 'price', 'created_at']
+    ordering = ['-created_at']  # Default ordering
     
     def get_queryset(self):
         """
-        Customize queryset.
+        Get queryset with filters applied.
         
-        - For list: Only show active products by default
-        - Optimize queries with select_related
-        - Support price range filtering
+        Filters:
+        - category: Filter by category ID
+        - min_price: Minimum price
+        - max_price: Maximum price
+        - min_rating: Minimum average rating
         """
-        queryset = super().get_queryset()
+        queryset = Product.objects.filter(is_active=True)
         
         # Optimize queries
         queryset = queryset.select_related('category')
+        queryset = queryset.prefetch_related('images')
         
-        # For list view: filter active by default
-        if self.action == 'list':
-            if 'is_active' not in self.request.query_params:
-                queryset = queryset.filter(is_active=True)
+        # Annotate with average rating
+        queryset = queryset.annotate(
+            avg_rating=Avg('reviews__rating')
+        )
         
-        # Price range filtering
-        price_min = self.request.query_params.get('price_min')
-        price_max = self.request.query_params.get('price_max')
+        # Category filter
+        category = self.request.query_params.get('category', None)
+        if category:
+            queryset = queryset.filter(category_id=category)
         
-        if price_min:
-            queryset = queryset.filter(price__gte=price_min)
-        if price_max:
-            queryset = queryset.filter(price__lte=price_max)
+        # Price range filters
+        min_price = self.request.query_params.get('min_price', None)
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        
+        max_price = self.request.query_params.get('max_price', None)
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+        
+        # Rating filter
+        min_rating = self.request.query_params.get('min_rating', None)
+        if min_rating:
+            queryset = queryset.filter(avg_rating__gte=min_rating)
         
         return queryset
     

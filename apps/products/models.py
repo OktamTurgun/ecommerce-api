@@ -255,18 +255,26 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'products'
-        ordering = ['-created_at']  # Newest first
+        ordering = ['-created_at']
+        indexes = [
+            # Search optimization
+            models.Index(fields=['name']),
+            models.Index(fields=['is_active']),
+            
+            # Filter optimization
+            models.Index(fields=['category', 'is_active']),
+            models.Index(fields=['price']),
+            
+            # Sort optimization
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['name', 'is_active']),
+            
+            # Combined queries
+            models.Index(fields=['category', 'price']),
+            models.Index(fields=['is_active', '-created_at']),
+        ]
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
-        indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['slug']),
-            models.Index(fields=['category']),
-            models.Index(fields=['is_active']),
-            models.Index(fields=['is_featured']),
-            models.Index(fields=['price']),
-        ]
     
     def __str__(self):
         """String representation: product name."""
