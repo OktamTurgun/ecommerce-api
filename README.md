@@ -370,7 +370,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Oktam Turgunov (Uktam)**
 
 - GitHub: [@OktamTurgun](https://github.com/OktamTurgun)
-- Email: your.email@example.com
+- Email: uktamturgunov30@gmail.com
 
 ---
 
