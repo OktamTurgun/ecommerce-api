@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #9C27B0;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .payment-box {
+            background-color: #f3e5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #9C27B0;
+        }
+        .amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: #9C27B0;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .payment-details {
+            background-color: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #9C27B0;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ Payment Confirmed</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{ user.get_full_name|default:user.email }},</p>
+        
+        <p>Your payment has been successfully processed!</p>
+        
+        <div class="payment-box">
+            <h3 style="text-align: center;">💳 Payment Received</h3>
+            <p class="amount">${{ payment.amount }}</p>
+            <p style="text-align: center; color: #666;">Payment ID: #{{ payment.id|slice:":8" }}</p>
+        </div>
+        
+        <div class="payment-details">
+            <h3>Payment Details</h3>
+            <p><strong>Order ID:</strong> #{{ order.id|slice:":8" }}</p>
+            <p><strong>Amount:</strong> ${{ payment.amount }}</p>
+            <p><strong>Payment Method:</strong> {{ payment.payment_method_type|default:"Card"|title }} •••• {{ payment.payment_method_last4|default:"****" }}</p>
+            <p><strong>Date:</strong> {{ payment.created_at|date:"F d, Y - H:i" }}</p>
+            <p><strong>Status:</strong> {{ payment.get_status_display }}</p>
+        </div>
+        
+        <p>Your order is now being processed and will be shipped soon. We'll notify you when it ships.</p>
+        
+        <center>
+            <a href="{{ order_url }}" class="button">View Order Details</a>
+        </center>
+        
+        <p>If you have any questions about this payment, please contact our support team.</p>
+        
+        <p>Thank you for your payment!</p>
+    </div>
+    
+    <div class="footer">
+        <p>© 2026 E-commerce. All rights reserved.</p>
+        <p>This is an automated email. Please do not reply directly to this message.</p>
+    </div>
+</body>
+</html>
