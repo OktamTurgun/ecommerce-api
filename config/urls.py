@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.shortcuts import redirect
 from django.conf.urls.static import static
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -11,6 +12,7 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
+    path("", lambda r: redirect("api/docs/", permanent=False)),
     # Admin panel
     path("admin/", admin.site.urls),
 
