@@ -225,3 +225,6 @@ __marimo__/
 !screenshots/*.jpg
 !screenshots/*.jpeg
 !screenshots/*.gif
+
+# Static files
+/staticfiles/
