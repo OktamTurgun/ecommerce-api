@@ -1,5 +1,3 @@
-# tests/users/test_password_reset.py - To'g'rilangan versiya
-
 import pytest
 from django.urls import reverse
 from rest_framework import status
