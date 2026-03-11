@@ -139,30 +139,6 @@ class ForgotPasswordView(APIView):
 
         return Response({"message": "Agar email ro'yxatdan o'tgan bo'lsa, parolni tiklash uchun ko'rsatmalar yuborildi."})
     
-# class ResetPasswordView(APIView):
-#     """Yangi parol o'rnatish"""
-#     permission_classes = [AllowAny]
-
-#     def post(self, request):
-#         serializer = ResetPasswordSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-
-#         uidb64 = serializer.validated_data['uidb64']
-#         token = serializer.validated_data['token']
-#         new_password = serializer.validated_data['new_password']
-
-#         user = get_user_from_uid(uidb64)
-#         if not user:
-#             return Response({"error": "Noto'g'ri link!"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         if not VerificationService.verify_email(user, token):
-#             return Response({"error": "Link muddati o'tgan yoki noto'g'ri!"}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-#         PasswordService.reset_password(user, new_password)
-
-#         return Response({"message": "Parol muvaffaqiyatli o'zgartirildi! Endi login qilishingiz mumkin."})
-    
 class ResetPasswordView(APIView):
     """Yangi parol o'rnatish"""
     permission_classes = [AllowAny]
@@ -274,7 +250,6 @@ class ResendVerificationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # TO'G'RILANDI: Endi to'g'ri serializer ishlatiladi
         serializer = ResendVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

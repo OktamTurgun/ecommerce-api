@@ -1,4 +1,3 @@
-# test_cache_performance.py
 import requests
 import time
 
