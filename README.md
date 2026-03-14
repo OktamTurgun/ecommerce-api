@@ -204,7 +204,7 @@ Monolithic Layered Architecture with Service Layer
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/ecommerce-api.git
+git clone https://github.com/OktamTurgun/ecommerce-api.git
 cd ecommerce-api
 ```
 
