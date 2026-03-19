@@ -228,3 +228,6 @@ __marimo__/
 
 # Static files
 /staticfiles/
+
+# Auto-generated output
+PROJECT_STRUCTURE.txt
